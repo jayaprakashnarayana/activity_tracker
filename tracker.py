@@ -34,13 +34,38 @@ def get_active_window_info():
     tell application "System Events"
         set frontApp to first application process whose frontmost is true
         set appName to name of frontApp
-        try
-            set windowTitle to name of front window of frontApp
-        on error
-            set windowTitle to "Unknown"
-        end try
-        return appName & "|||" & windowTitle
     end tell
+
+    if appName is "Google Chrome" then
+        tell application "Google Chrome"
+            try
+                set windowTitle to title of active tab of front window
+                set windowUrl to URL of active tab of front window
+                return appName & "|||" & windowTitle & " (" & windowUrl & ")"
+            on error
+                return appName & "|||Unknown"
+            end try
+        end tell
+    else if appName is "Safari" then
+        tell application "Safari"
+            try
+                set windowTitle to name of front document
+                set windowUrl to URL of front document
+                return appName & "|||" & windowTitle & " (" & windowUrl & ")"
+            on error
+                return appName & "|||Unknown"
+            end try
+        end tell
+    else
+        tell application "System Events"
+            try
+                set windowTitle to name of front window of application process appName
+                return appName & "|||" & windowTitle
+            on error
+                return appName & "|||Unknown"
+            end try
+        end tell
+    end if
     """
     try:
         # We use strict check_output timeout to avoid hangs
