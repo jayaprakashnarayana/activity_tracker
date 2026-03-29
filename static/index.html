@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-blur"></div>
+    <div class="container">
+        <header>
+            <div class="header-text">
+                <h1>Daily Activity Timeline</h1>
+                <p>Track your applications, keystrokes, and focus.</p>
+            </div>
+            <div class="controls">
+                <input type="date" id="datePicker">
+                <button id="loadBtn">Load</button>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-info">
+                    <h3>Total Active Time</h3>
+                    <p id="totalTime">0h 0m</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⌨️</div>
+                <div class="stat-info">
+                    <h3>Total Keystrokes</h3>
+                    <p id="totalKeys">0</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-info">
+                    <h3>Top App</h3>
+                    <p id="topApp">-</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="timeline-container">
+            <h2>Hour by Hour Breakdown</h2>
+            <div class="timeline" id="timeline">
+                <!-- Data injected here -->
+                <div class="empty-state">Select a date to load activity.</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Template for a timeline item -->
+    <template id="timeline-template">
+        <div class="timeline-item">
+            <div class="time-label"></div>
+            <div class="timeline-content card">
+                <div class="card-header">
+                    <h3 class="hour-title">Activity</h3>
+                    <div class="card-badges">
+                        <span class="badge time-badge"></span>
+                        <span class="badge keys-badge"></span>
+                    </div>
+                </div>
+                
+                <div class="apps-list">
+                    <!-- Apps injected here -->
+                </div>
+                
+                <div class="windows-list">
+                    <h4>Window Titles</h4>
+                    <ul></ul>
+                </div>
+
+                <div class="keys-preview">
+                    <h4>Keystroke Logs (Preview)</h4>
+                    <pre><code></code></pre>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+</html>

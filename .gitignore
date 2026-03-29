@@ -1,0 +1,16 @@
+# Database - NEVER commit keystrokes or activity logs
+activity.db
+
+# Environments
+venv/
+env/
+.env
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Mac specific
+.DS_Store
