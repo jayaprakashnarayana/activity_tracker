@@ -1,6 +1,11 @@
 # Database - NEVER commit keystrokes or activity logs
 activity.db
 
+# Logs and Screenshots
+*.log
+screenshots/
+static/screenshots/
+
 # Environments
 venv/
 env/

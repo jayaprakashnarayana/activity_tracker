@@ -4,9 +4,11 @@ A local, privacy-focused application for macOS that tracks your active applicati
 
 ## 🚀 Features
 - **Keylogging & App Tracking**: Automatically logs what apps you are using, what window or website is active, and the keystrokes typed.
+- **Browser URL Tracking**: Retrieves the active URL for Google Chrome and Safari to track exact web activity.
+- **Automatic Screenshots**: Stealthily captures a screenshot of your screen every 15 minutes, viewable from the web dashboard.
 - **Hourly Breakdowns**: Groups your activity into 1-hour chunks.
 - **Local Dashboard**: A modern, dark-themed UI (glassmorphism design) to review your daily stats.
-- **Privacy First**: All data is saved strictly to a local SQLite database (`activity.db`). The `.gitignore` ensures this private data is never pushed to GitHub.
+- **Privacy First**: All data is saved strictly to a local SQLite database (`activity.db`) and a local `screenshots/` folder. The `.gitignore` ensures this private data is never pushed to GitHub.
 
 ## 🛠 Prerequisites
 - macOS
@@ -46,8 +48,8 @@ cd activity_tracker
 ```
 
 > **⚠️ macOS Permissions Warning:**
-> The first time you run this, macOS will block the script from reading your keystrokes and window titles due to security protections.
-> You must go to **System Settings > Privacy & Security > Accessibility** and explicitly enable your Terminal app. Once enabled, run `./start.sh` again.
+> The first time you run this, macOS will block the script from reading your keystrokes, window titles, and screen due to security protections.
+> You must go to **System Settings > Privacy & Security**, and explicitly enable your Terminal app under **Accessibility**, **Input Monitoring**, and **Screen Recording**. Once enabled, run `./start.sh` again.
 
 ### 2. View Your Timeline
 Once started, you can safely close your Terminal. Open your web browser and go to:
