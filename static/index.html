@@ -18,6 +18,7 @@
             <div class="controls">
                 <input type="date" id="datePicker">
                 <button id="loadBtn">Load</button>
+                <button id="settingsBtn" class="icon-btn" title="Storage Settings">⚙️</button>
             </div>
         </header>
 
@@ -72,8 +73,12 @@
                 </div>
                 
                 <div class="windows-list">
-                    <h4>Window Titles</h4>
+                    <h4>Window Titles & Links</h4>
                     <ul></ul>
+                </div>
+
+                <div class="screenshot-gallery">
+                    <!-- img tags injected here -->
                 </div>
 
                 <div class="keys-preview">
@@ -83,6 +88,27 @@
             </div>
         </div>
     </template>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content card">
+            <h2>Storage Settings</h2>
+            <p style="color: var(--subtext-color); margin-bottom: 20px;">Your 15-minute screenshots are saved in standard macOS retina quality to preserve text clarity.</p>
+            
+            <div class="storage-stats">
+                <h3>Screenshots Size: <span id="storageSize">-- MB</span></h3>
+                <p>Total Files: <span id="storageCount">-</span></p>
+            </div>
+            
+            <div class="cleanup-options">
+                <button onclick="cleanupScreenshots(30)">Delete older than 30 Days</button>
+                <button onclick="cleanupScreenshots(7)">Delete older than 7 Days</button>
+                <button onclick="cleanupScreenshots(-1)" class="danger-btn">Delete All Screenshots</button>
+            </div>
+            
+            <button id="closeSettings" style="margin-top: 20px; width: 100%; background: #334155;">Close Setup</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

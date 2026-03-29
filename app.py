@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, send_from_directory
 import sqlite3
 import os
+import shutil
 from datetime import datetime, timedelta
 
 app = Flask(__name__, static_folder='static', static_url_path='/')
@@ -47,8 +48,9 @@ def get_daily_summary():
             "TotalActiveSeconds": 0,
             "TotalKeystrokes": 0,
             "Apps": {},
-            "WindowTitles": [], # list of unique or longest window titles
-            "TextPreview": ""  # preview of what was typed
+            "WindowTitles": [], # list of {title, url}
+            "TextPreview": "",  # preview of what was typed
+            "Screenshots": []
         }
         
     for row in rows:
@@ -74,11 +76,45 @@ def get_daily_summary():
             hourly_data[h_str]["Apps"][app_name] = 0
             
         hourly_data[h_str]["Apps"][app_name] += 5
-        
         # Add window title if unique to summarize roughly what they did
-        if window_title and window_title not in hourly_data[h_str]["WindowTitles"] and len(hourly_data[h_str]["WindowTitles"]) < 10:
-            if window_title != "Unknown":
-                hourly_data[h_str]["WindowTitles"].append(window_title)
+        if window_title and window_title != "Unknown":
+            parsed_title = window_title
+            parsed_url = ""
+            if " [URL_SEP] " in window_title:
+                parts = window_title.split(" [URL_SEP] ")
+                parsed_title = parts[0]
+                parsed_url = parts[1] if len(parts) > 1 else ""
+
+            # Check uniqueness based on title
+            exists = any(item.get("title") == parsed_title for item in hourly_data[h_str]["WindowTitles"])
+            
+            if not exists and len(hourly_data[h_str]["WindowTitles"]) < 10:
+                hourly_data[h_str]["WindowTitles"].append({
+                    "title": parsed_title,
+                    "url": parsed_url
+                })
+
+    # Fetch screenshots for the day
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        SELECT timestamp, file_path
+        FROM screenshots
+        WHERE timestamp LIKE ?
+        ORDER BY timestamp ASC
+    ''', (target_date + "%",))
+    
+    ss_rows = c.fetchall()
+    conn.close()
+    
+    for row in ss_rows:
+        ss_timestamp, ss_path = row
+        try:
+            time_obj = datetime.fromisoformat(ss_timestamp)
+        except ValueError:
+            continue
+        h_str = f"{time_obj.hour:02d}"
+        hourly_data[h_str]["Screenshots"].append(ss_path)
 
     # Convert mapping to list for easier rendering
     summary_list = []
@@ -101,7 +137,59 @@ def get_daily_summary():
         "hours": summary_list
     })
 
+@app.route('/api/storage_stats')
+def get_storage_stats():
+    # Calculate size of screenshots folder
+    ss_dir = os.path.join(os.path.dirname(__file__), 'static', 'screenshots')
+    total_size = 0
+    file_count = 0
+    if os.path.exists(ss_dir):
+        for f in os.listdir(ss_dir):
+            fp = os.path.join(ss_dir, f)
+            if os.path.isfile(fp):
+                total_size += os.path.getsize(fp)
+                file_count += 1
+                
+    # return mb
+    return jsonify({
+        "size_mb": round(total_size / (1024 * 1024), 2),
+        "file_count": file_count
+    })
+
+@app.route('/api/cleanup_screenshots', methods=['POST'])
+def cleanup_screenshots():
+    # expects JSON { "days": 7 | 30 | -1 (all) }
+    req = request.get_json() or {}
+    days = req.get("days", -1)
+    
+    ss_dir = os.path.join(os.path.dirname(__file__), 'static', 'screenshots')
+    if not os.path.exists(ss_dir):
+        return jsonify({"success": True, "deleted": 0})
+        
+    deleted_count = 0
+    now = time.time() if hasattr(os, 'stat') else 0
+    import time # Ensure time is available locally to avoid circulars
+    
+    cutoff = time.time() - (days * 86400) if days > 0 else float('inf')
+    
+    for f in os.listdir(ss_dir):
+        fp = os.path.join(ss_dir, f)
+        if os.path.isfile(fp):
+            # If "all", delete everything
+            if days == -1:
+                os.remove(fp)
+                deleted_count += 1
+            else:
+                # Delete if older than cutoff
+                if os.stat(fp).st_mtime < cutoff:
+                    os.remove(fp)
+                    deleted_count += 1
+                    
+    # We could also purge db references here, but for now orphaned DB records won't break the frontend.
+    
+    return jsonify({"success": True, "deleted": deleted_count})
+
 if __name__ == '__main__':
     # Ensure static directory exists
-    os.makedirs(os.path.join(os.path.dirname(__file__), 'static'), exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(__file__), 'static', 'screenshots'), exist_ok=True)
     app.run(port=5001, debug=True)

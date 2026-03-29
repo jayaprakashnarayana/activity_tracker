@@ -10,7 +10,44 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initial load
     loadData(today);
+    
+    // Settings logic
+    document.getElementById('settingsBtn').addEventListener('click', openSettings);
+    document.getElementById('closeSettings').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.remove('active');
+    });
 });
+
+async function openSettings() {
+    document.getElementById('settingsModal').classList.add('active');
+    try {
+        const res = await fetch('/api/storage_stats');
+        const data = await res.json();
+        document.getElementById('storageSize').textContent = `${data.size_mb} MB`;
+        document.getElementById('storageCount').textContent = data.file_count;
+    } catch (e) {
+        console.error(e);
+        document.getElementById('storageSize').textContent = "Error";
+    }
+}
+
+async function cleanupScreenshots(days) {
+    if (confirm("Are you sure you want to delete these screenshots? This cannot be undone.")) {
+        try {
+            const res = await fetch('/api/cleanup_screenshots', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ days: days })
+            });
+            const data = await res.json();
+            alert(`Successfully deleted ${data.deleted} screenshots.`);
+            openSettings(); // refresh stats
+            loadData(document.getElementById('datePicker').value); // refresh UI
+        } catch (e) {
+            alert("Error running cleanup.");
+        }
+    }
+}
 
 async function loadData(date) {
     try {
@@ -66,6 +103,7 @@ function renderDashboard(hoursArr) {
         const appsList = clone.querySelector('.apps-list');
         const windowsList = clone.querySelector('.windows-list ul');
         const keysPre = clone.querySelector('.keys-preview pre');
+        const gallery = clone.querySelector('.screenshot-gallery');
         
         timeLabel.textContent = `${h}:00`;
         
@@ -81,15 +119,41 @@ function renderDashboard(hoursArr) {
             appsList.appendChild(row);
         }
         
-        // Populate Windows
+        // Populate Windows & URLs
         if (d.WindowTitles && d.WindowTitles.length > 0) {
-            d.WindowTitles.forEach(title => {
+            d.WindowTitles.forEach(item => {
                 const li = document.createElement('li');
-                li.textContent = title;
+                // handle either new separated dict or old string format
+                if (typeof item === 'string') {
+                    li.textContent = item;
+                } else {
+                    li.textContent = item.title;
+                    if (item.url && item.url.startsWith('http')) {
+                        const a = document.createElement('a');
+                        a.href = item.url;
+                        a.target = '_blank';
+                        a.className = 'window-link';
+                        a.textContent = 'Open Link ↗';
+                        li.appendChild(a);
+                    }
+                }
                 windowsList.appendChild(li);
             });
         } else {
             clone.querySelector('.windows-list').style.display = 'none';
+        }
+        
+        // Populate Screenshots
+        if (d.Screenshots && d.Screenshots.length > 0) {
+            d.Screenshots.forEach(path => {
+                const img = document.createElement('img');
+                img.src = `/${path}`; // points to static root
+                // clicking image opens it full screen
+                img.onclick = () => window.open(img.src, '_blank');
+                gallery.appendChild(img);
+            });
+        } else {
+            gallery.style.display = 'none';
         }
         
         // Populate Keys

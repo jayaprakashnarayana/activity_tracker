@@ -23,6 +23,16 @@ def init_db():
             keystrokes_text TEXT DEFAULT ""
         )
     ''')
+    
+    # Table to store periodic screenshot paths
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS screenshots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            file_path TEXT NOT NULL
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -39,6 +49,20 @@ def log_event(app_name, window_title, keystrokes_count, keystrokes_text):
         INSERT INTO events (timestamp, app_name, window_title, keystrokes_count, keystrokes_text)
         VALUES (?, ?, ?, ?, ?)
     ''', (timestamp, app_name, window_title, keystrokes_count, keystrokes_text))
+    
+    conn.commit()
+    conn.close()
+
+def log_screenshot(file_path):
+    conn = get_connection()
+    c = conn.cursor()
+    
+    timestamp = datetime.now().isoformat()
+    
+    c.execute('''
+        INSERT INTO screenshots (timestamp, file_path)
+        VALUES (?, ?)
+    ''', (timestamp, file_path))
     
     conn.commit()
     conn.close()

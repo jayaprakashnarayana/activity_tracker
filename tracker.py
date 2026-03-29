@@ -1,8 +1,10 @@
 import time
 import subprocess
 import threading
+import os
+from datetime import datetime
 from pynput import keyboard
-from database import init_db, log_event
+from database import init_db, log_event, log_screenshot
 
 # Global variables to store typing stats in the current interval
 current_keys_typed = []
@@ -41,7 +43,7 @@ def get_active_window_info():
             try
                 set windowTitle to title of active tab of front window
                 set windowUrl to URL of active tab of front window
-                return appName & "|||" & windowTitle & " (" & windowUrl & ")"
+                return appName & "|||" & windowTitle & "|||" & windowUrl
             on error
                 return appName & "|||Unknown"
             end try
@@ -51,7 +53,7 @@ def get_active_window_info():
             try
                 set windowTitle to name of front document
                 set windowUrl to URL of front document
-                return appName & "|||" & windowTitle & " (" & windowUrl & ")"
+                return appName & "|||" & windowTitle & "|||" & windowUrl
             on error
                 return appName & "|||Unknown"
             end try
@@ -74,6 +76,12 @@ def get_active_window_info():
         parts = decoded.split('|||')
         app_name = parts[0]
         window_title = parts[1] if len(parts) > 1 else ""
+        window_url = parts[2] if len(parts) > 2 else ""
+        # Re-attach URL cleanly if present for old codebase format, or pass URL directly if we re-write the db schema
+        # Since we're keeping `window_title` as the DB column, we'll store them as a combined string but cleanly separated by a distinct delimiter so `app.py` can parse it.
+        if window_url:
+             window_title = f"{window_title} [URL_SEP] {window_url}"
+             
         return app_name, window_title
     except Exception as e:
         return None, None
@@ -84,9 +92,30 @@ def tracking_loop():
     interval = 5  # Log an event every 5 seconds
     print(f"Starting tracking loop. Logging every {interval} seconds...")
     
+    # Setup Screenshots Directory
+    SCREENSHOT_DIR = os.path.join(os.path.dirname(__file__), 'static', 'screenshots')
+    os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+    last_screenshot_time = time.time()
+    
     while True:
         time.sleep(interval)
         
+        current_time = time.time()
+        
+        # Take screenshot every 15 minutes (900 seconds)
+        if current_time - last_screenshot_time >= 900:
+            timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            filename = f"screenshot_{timestamp_str}.png"
+            filepath = os.path.join(SCREENSHOT_DIR, filename)
+            try:
+                # -x disables sound, native mac utility
+                subprocess.run(["screencapture", "-x", filepath])
+                log_screenshot(f"screenshots/{filename}")
+            except Exception as e:
+                print(f"Failed to capture screenshot: {e}")
+            
+            last_screenshot_time = current_time
+
         app_name, window_title = get_active_window_info()
         
         with keys_lock:
