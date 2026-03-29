@@ -36,31 +36,31 @@ To get the application running on your local machine, open your Mac's Terminal a
 
 ## 🎮 How to Use
 
-The application is split into two parts: the background tracker daemon and the web dashboard server. You should run both simultaneously in separate terminal windows.
+We have provided simple bash scripts that run everything quietly in the background, so you never have to keep terminal windows open!
 
-### 1. Start the Background Tracker
-In your first Terminal window (with your virtual environment activated):
+### 1. Start the Tracker & Dashboard
+Open your Terminal and run:
 ```bash
-python3 tracker.py
+cd activity_tracker
+./start.sh
 ```
 
 > **⚠️ macOS Permissions Warning:**
 > The first time you run this, macOS will block the script from reading your keystrokes and window titles due to security protections.
-> You must go to **System Settings > Privacy & Security > Accessibility** and explicitly enable your Terminal app (or IDE). Once enabled, restart the `tracker.py` script.
+> You must go to **System Settings > Privacy & Security > Accessibility** and explicitly enable your Terminal app. Once enabled, run `./start.sh` again.
 
-### 2. Start the Dashboard Server
-Open a **new** Terminal window, activate the environment, and run the server:
-```bash
-cd activity_tracker
-source venv/bin/activate
-python3 app.py
-```
-
-### 3. View Your Timeline
-Open your preferred web browser and go to:
+### 2. View Your Timeline
+Once started, you can safely close your Terminal. Open your web browser and go to:
 **http://127.0.0.1:5001**
 
-You will see your application usage, time spent, window titles, and key logs populating in real-time as you use your machine!
+You will see your application usage, time spent, window titles, and key logs populating in real-time.
+
+### 3. Stop Tracking
+When you want to stop recording your activity and turn off the dashboard server, simply open a Terminal and run:
+```bash
+cd activity_tracker
+./stop.sh
+```
 
 ## 🔒 Security Note
 Do **NOT** remove `activity.db` from your `.gitignore`. This database tracks exact alphanumeric keystrokes, which can include sensitive information if typed outside of secure password fields. Keep this repository private and secure.
